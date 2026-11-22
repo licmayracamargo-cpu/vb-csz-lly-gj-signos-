@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aventura Ortográfica con Profe Mayra</title>
+<style>
+:root{--g:#5FA83A;--gd:#2F6B2F;--gl:#E3F1D8;--gr:#6B7771;--gr2:#CFD6D2;--gr3:#EEF1EE;--ink:#26332b}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Fredoka","Nunito","Arial Rounded MT Bold","Trebuchet MS",sans-serif;background:var(--gr3);color:var(--ink);font-size:19px;min-height:100vh}
+#app{max-width:900px;margin:0 auto;padding:14px}
+h1{text-align:center;color:var(--gd);font-size:2rem;margin:4px 0}
+h3{margin:8px 0;color:var(--gd)}
+.prof{display:flex;gap:10px;align-items:center;background:#fff;border:3px solid var(--gr2);border-radius:22px;padding:10px 14px;margin:10px 0}
+.av{font-size:2.6rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.card{font:inherit;color:inherit;background:#fff;border:3px solid var(--g);border-radius:24px;padding:14px;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:center;text-align:center;box-shadow:0 5px 0 var(--gr2);transition:transform .2s}
+.card:hover{transform:translateY(-3px)}
+.card.lock{background:var(--gr2);border-color:var(--gr);opacity:.85}
+.ic{font-size:2.6rem}.card small{font-size:.85rem;color:var(--gr)}
+.btn{font:inherit;font-weight:700;border:0;border-radius:18px;padding:10px 18px;background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 4px 0 var(--gr2);margin:6px;font-size:1.05rem;border:2px solid var(--gr2)}
+.btn.go{background:var(--g);color:#fff;border-color:var(--gd);font-size:1.2rem;padding:12px 26px}
+.bar{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:#fff;border:3px solid var(--gr2);border-radius:20px;padding:6px 12px;font-weight:700}
+.box{background:#fff;border:3px solid var(--gr2);border-radius:26px;padding:18px;margin-top:12px;text-align:center}
+.sent{font-size:1.9rem;font-weight:700;background:var(--gr3);border-radius:18px;padding:16px;margin:10px 0;line-height:1.7}
+.gap{display:inline-block;min-width:46px;border-bottom:5px solid var(--g);background:var(--gl);border-radius:10px;padding:0 8px;text-align:center;color:var(--gd)}
+.gap.hot{background:#c9e6b5}
+.ops{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:12px 0}
+.opt{font:inherit;font-weight:700;font-size:1.3rem;border:3px solid var(--gr2);background:#fff;border-radius:20px;padding:12px 22px;cursor:pointer;color:var(--ink);box-shadow:0 4px 0 var(--gr2)}
+.opt.big{font-size:2rem;min-width:84px}
+.opt:hover:not(:disabled){border-color:var(--g);background:var(--gl)}
+.opt.rt,.tile.rt{background:#b9e3a0;border-color:var(--g)}
+.opt.bad,.tile.bad{background:#e6e9e7;border-color:var(--gr);animation:sh .4s}
+@keyframes sh{25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
+.tile{display:inline-block;font-weight:700;font-size:2rem;min-width:84px;background:var(--g);color:#fff;border-radius:18px;padding:10px 20px;cursor:grab;touch-action:none;user-select:none;box-shadow:0 5px 0 var(--gd)}
+.tile.sel{outline:4px solid var(--gr)}
+.tile.rt{color:var(--ink)}.tile.bad{color:var(--gr)}
+.fly{position:fixed;pointer-events:none;z-index:99;transform:rotate(-6deg)}
+.fb{margin-top:12px;border-radius:18px;padding:12px;font-size:1.1rem;text-align:left}
+.fb.ok{background:var(--gl);border:2px solid var(--g)}.fb.bad{background:var(--gr3);border:2px solid var(--gr)}
+.stars{font-size:3rem}
+.rec{background:var(--gl);border-radius:18px;padding:8px;margin:10px 0;font-weight:700}
+.conf{position:fixed;top:-30px;font-size:2rem;animation:fall 1.6s linear forwards;z-index:98;pointer-events:none}
+@keyframes fall{to{transform:translateY(110vh) rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body><div id="app"></div>
+<script>
+/* ===== BANCOS: 20 ejercicios por nivel =====
+   Niveles 1-5: "oración con _ |letra correcta|letra incorrecta[|otra incorrecta]"
+   Nivel 6: "oración sin signos|q (pregunta) o e (exclamación)" */
+const BK=[
+{t:"Uso de B y V",ic:"🐄",tip:"B y V suenan igual: ¡fíjate bien en cómo se escribe cada palabra!",d:`La _aca da leche.|v|b
+Tomo agua en un _aso.|v|b
+El _urro lleva una carga pesada.|b|v
+El _arco navega por el mar.|b|v
+La _ufanda me da calor.|b|v
+El pájaro puede _olar muy alto.|v|b
+Me gusta _ailar con mi mamá.|b|v
+Leo un li_ro de cuentos.|b|v
+La nie_e cae del cielo.|v|b
+El _ebé duerme en su cuna.|b|v
+Mi tío tra_aja en una fábrica.|b|v
+Hoy _isitamos a la abuela.|v|b
+El lo_o aúlla en el bosque.|b|v
+El helado de _ainilla es rico.|v|b
+Mi amigo es muy _aliente.|v|b
+El _olcán echa humo.|v|b
+La _allena nada en el mar.|b|v
+Subo la cuesta en mi _icicleta.|b|v
+El _iernes tengo clase de música.|v|b
+Mi mamá escri_e una carta.|b|v`},
+{t:"Uso de C, S y Z",ic:"🦊",tip:"C, S y Z pueden sonar parecido: ¡lee la palabra completa y recuerda cómo se ve!",d:`Hoy _enamos temprano.|c|s|z
+El _apato está limpio.|z|s|c
+El _ielo está despejado.|c|s|z
+El _ol brilla fuerte.|s|c|z
+Lloro cuando corto la _ebolla.|c|s|z
+En la es_uela aprendo mucho.|c|s|z
+El pa_tel de fresa es dulce.|s|c|z
+El _orro es muy astuto.|z|s|c
+El _ancudo me picó la pierna.|z|s|c
+Mi mamá corta la _anahoria.|z|s|c
+La _ereza es una fruta roja.|c|s|z
+Fuimos al _irco con papá.|c|s|z
+La _illa es muy cómoda.|s|c|z
+El _apo salta en la laguna.|s|c|z
+Mi hermana usa una _amisa blanca.|c|s|z
+Subo por la es_alera.|c|s|z
+El pe_ nada en el río.|z|s|c
+Vivo en una _iudad grande.|c|s|z
+El _ofá es muy suave.|s|c|z
+El _erdo vive en la granja.|c|s|z`},
+{t:"Uso de LL y Y",ic:"🦙",tip:"LL y Y suenan parecido: ¡observa cómo se escribe cada palabra!",d:`Comí po_o con arroz.|ll|y
+La _ave abre la puerta.|ll|y
+La _uvia moja las calles.|ll|y
+Hoy _o juego fútbol con mis amigos.|y|ll
+El _ate está en el puerto.|y|ll
+El doctor me puso _eso en el brazo.|y|ll
+La _ama vive en los Andes.|ll|y
+El pa_aso hace reír a todos.|y|ll
+El bebé _ora de hambre.|ll|y
+La estre_a brilla de noche.|ll|y
+Mi cabe_o es negro.|ll|y
+Un ra_o iluminó el cielo.|y|ll
+Mi abuela prepara torti_as.|ll|y
+La _uca es rica con queso.|y|ll
+La _egua cuida a su potrillo.|y|ll
+Mi gorra es amari_a.|ll|y
+Hay un ho_o en el jardín.|y|ll
+El casti_o es muy antiguo.|ll|y
+Mi papá es ma_or que yo.|y|ll
+La ca_e está limpia.|ll|y`},
+{t:"Uso de G y J",ic:"🦒",tip:"La G suena suave con «ga, go, gu» y fuerte con «ge, gi». ¡Fíjate en la palabra!",d:`El _irasol mira al sol.|g|j
+Me lavo las manos con _abón.|j|g
+La _irafa tiene el cuello largo.|j|g
+Las flores crecen en el _ardín.|j|g
+Tomo _ugo de naranja.|j|g
+Mi _ato bebe leche.|g|j
+El _inete monta su caballo.|j|g
+Hay mucha _ente en la plaza.|g|j
+El _usano vive bajo la tierra.|g|j
+Mi hermanito tiene un _uguete nuevo.|j|g
+El _eneral dirige al ejército.|g|j
+El pájaro está en la _aula.|j|g
+Mi abuelo es muy _eneroso.|g|j
+Los _emelos se parecen mucho.|g|j
+La _oya brilla mucho.|j|g
+El _aguar vive en la selva.|j|g
+Hacemos ejercicio en el _imnasio.|g|j
+La _elatina de fresa es dulce.|g|j
+La _ungla es muy verde y grande.|j|g
+El conejo es muy á_il.|g|j`},
+{t:"Uso de D y P",ic:"🐬",tip:"D y P son letras distintas: ¡lee despacio cada palabra!",d:`El _erro ladra muy fuerte.|p|d
+Juego con la _elota en el patio.|p|d
+El helado es muy _ulce.|d|p
+Guardo mi _inero en la alcancía.|d|p
+Me gusta _ormir la siesta.|d|p
+El _ragón escupe fuego.|d|p
+Me lavo los _ientes todos los días.|d|p
+El _elfín salta en el mar.|d|p
+El _octor me revisa la garganta.|d|p
+El _omingo no hay clases.|d|p
+Abro la _uerta de mi casa.|p|d
+Nos bañamos en la _laya.|p|d
+La _iedra es dura.|p|d
+Me peino con el _eine.|p|d
+Como un _látano maduro.|p|d
+El _ájaro vuela alto.|p|d
+El _ulpo vive en el mar.|p|d
+Escribo con el lá_iz.|p|d
+Uso _intura para dibujar.|p|d
+Mi _apá me abraza.|p|d`},
+{t:"¡Exclamación! y ¿Interrogación?",ic:"❓",tip:"En español los signos van al principio y al final: ¿...? y ¡...!",d:`Cómo te llamas|q
+Dónde vives|q
+Qué hora es|q
+Cuántos años tienes|q
+Quién llegó primero|q
+Por qué lloras|q
+Cuál es tu color favorito|q
+Cuándo es tu cumpleaños|q
+Qué comiste hoy|q
+Me prestas tu lápiz|q
+Feliz cumpleaños|e
+Qué lindo día|e
+Auxilio|e
+Cuidado con el perro|e
+Qué susto me diste|e
+Bienvenidos a la escuela|e
+Viva mi equipo|e
+Silencio|e
+Qué rico huele|e
+Qué bonito dibujo|e`}];
+BK.forEach(g=>g.items=g.d.split("\n").map(l=>l.split("|")));
+const PASS=30,PTS=5,NQ=9; // 9 preguntas x 5 puntos = 45
+/* ===== Utilidades ===== */
+const $=id=>document.getElementById(id),app=$("app");
+const sh=a=>a.map(x=>[Math.random(),x]).sort((p,q)=>p[0]-q[0]).map(x=>x[1]);
+const mem={};
+function load(){let d=null;try{const r=localStorage.getItem("aom");if(r)d=JSON.parse(r)}catch(e){}d=d||mem.d||{};d.best=d.best||[];d.used=d.used||{};return d}
+function save(d){mem.d=d;try{localStorage.setItem("aom",JSON.stringify(d))}catch(e){}}
+let ac;function snd(ok){try{ac=ac||new(window.AudioContext||webkitAudioContext)();(ok?[[523,0],[659,.1],[784,.2]]:[[250,0],[200,.12]]).forEach(([f,d])=>{const o=ac.createOscillator(),g=ac.createGain(),t=ac.currentTime+d;o.type=ok?"sine":"triangle";o.frequency.value=f;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.2)})}catch(e){}}
+function burst(n){for(let i=0;i<n;i++){const s=document.createElement("span");s.className="conf";s.textContent=["🌿","⭐","🍃","🎉"][i%4];s.style.left=Math.random()*95+"%";s.style.animationDelay=Math.random()*.4+"s";document.body.appendChild(s);setTimeout(()=>s.remove(),2200)}}
+const tok=s=>s.split(" ").find(w=>w.includes("_"));               // palabra con hueco
+const wd=(s,l)=>tok(s).replace(/[.,;:!?]/g,"").replace("_",l);   // palabra completada
+const PR=["¡Muy bien!","¡Excelente!","¡Lo lograste!","¡Qué bien escribes!","¡Genial!"];
+/* ===== Construcción de una pregunta ===== */
+function mk(gi,id,m){const g=BK[gi],it=g.items[id];
+if(gi==5){const t=it[0],ty=it[1],right=ty=="q"?"¿"+t+"?":"¡"+t+"!",x1=ty=="q"?"¡"+t+"!":"¿"+t+"?",x2=ty=="q"?t+"?":t+"!";
+const o=m=="cmp"?[["ok",right],["x1",x1]]:m=="mc"?[["ok",right],["x1",x1],["x2",x2]]:[["q","¿ ?"],["e","¡ !"]];
+return{m,s:t,right,o:sh(o),cor:(m=="cmp"||m=="mc")?"ok":ty,why:ty=="q"?"Las preguntas llevan ¿ al empezar y ? al terminar.":"Las exclamaciones llevan ¡ al empezar y ! al terminar."}}
+const s=it[0],c=it[1],a=it.slice(2),ls=[c,...a];
+const o=m=="cmp"?[[c,wd(s,c)],[a[Math.random()*a.length|0],""]]:m=="mc"?[...ls.map(l=>[l,wd(s,l)]),["-",wd(s,"")]]:ls.map(l=>[l,l]);
+if(m=="cmp")o[1][1]=wd(s,o[1][0]);
+return{m,s,right:s.replace("_",c),o:sh(o),cor:c,why:"«"+wd(s,c)+"» se escribe con «"+c+"». "+g.tip}}
+/* ===== Menú y progreso bloqueado ===== */
+let S={};
+const unlocked=(d,i)=>i==0||(d.best[i-1]||0)>=PASS;
+function menu(msg){const d=load();
+app.innerHTML=`<h1>🌿 Aventura Ortográfica con Profe Mayra</h1><div class=prof><span class=av>👩‍🏫</span><div>${msg||"¡Hola! Soy la Profe Mayra. Para pasar de nivel necesitas <b>"+PASS+" de 45 puntos</b>. ¡Tú puedes!"}</div></div><div class=grid>`+BK.map((g,i)=>{const b=d.best[i]||0;
+return unlocked(d,i)?`<button class=card onclick="jugar(${i})"><span class=ic>${g.ic}</span><b>Nivel ${i+1}: ${g.t}</b><span>🏆 Mejor puntaje: <b>${b}/45</b> ${b>=PASS?"✅":""}</span><small>Meta para avanzar: ${PASS}/45 · Ejercicios vistos: ${(d.used[i]||[]).length}/20</small></button>`
+:`<button class="card lock" onclick="menu('🔒 El Nivel ${i+1} se abre cuando saques ${PASS} de 45 puntos en el Nivel ${i}. ¡Ánimo, tú puedes!')"><span class=ic>🔒</span><b>Nivel ${i+1}: ${g.t}</b><small>Necesitas ${PASS}/45 puntos en el nivel anterior</small></button>`}).join("")+`</div><p style="text-align:center"><button class=btn id=rs onclick="resetAll()">Borrar progreso</button></p>`}
+function resetAll(){if(!S.ask){S.ask=1;$("rs").textContent="¿Seguro? Toca otra vez para borrar todo";return}S.ask=0;save({best:[],used:{}});menu()}
+/* ===== Partida: 9 ejercicios nuevos primero (sin repetir hasta agotar el banco) ===== */
+function jugar(gi){const d=load(),u=d.used[gi]||[],all=[...Array(20).keys()],un=all.filter(x=>!u.includes(x));
+let p=sh(un).slice(0,NQ),top=[];
+if(p.length<NQ){top=sh(all.filter(x=>!p.includes(x))).slice(0,NQ-p.length);p=p.concat(top)}
+let nu=[...new Set([...u,...p])],cyc=0;
+if(top.length){nu=top;cyc=1}else if(nu.length>=20){nu=[];cyc=1}
+d.used[gi]=nu;save(d);
+const ms=sh(["cmp","cmp","fill","fill","drag","drag","mc","mc","drag"]);
+S={gi,q:p.map((id,k)=>mk(gi,id,ms[k])),n:0,pts:0,ok:0,st:0,cyc};pregunta()}
+function hdr(){const b=load().best[S.gi]||0;return `<div class=bar><button class=btn onclick="menu()">🏠</button><span>Nivel ${S.gi+1}: ${BK[S.gi].t}</span><span>Pregunta ${S.n+1}/${NQ}</span><span>⭐ ${S.pts}/45</span><span>🏆 Mejor: ${b}</span></div><p style="text-align:center;margin:6px">Meta: ${PASS} puntos para avanzar · Cada acierto vale ${PTS}</p>`}
+function pregunta(){const q=S.q[S.n],dr=q.m=="drag",fl=q.m=="fill"||dr,s6=S.gi==5;S.lock=0;S.sel=null;let sent="";
+if(s6){if(fl)sent=`<span class=gap id=gap>?</span> ${q.s}`}
+else if(fl)sent=q.s.replace("_",'<span class=gap id=gap>?</span>');
+else{const tk=tok(q.s),w=tk.replace(/[.,;:!?]/g,"");sent=q.s.replace(tk,tk.replace(w,'<span class=gap>______</span>'))}
+const P={cmp:s6?"¿Cuál está bien escrita?":"Elige la palabra bien escrita",mc:s6?"¿Cuál oración está bien escrita?":"¿Qué palabra completa la oración?",fill:s6?"Elige los signos que faltan":"Completa la letra que falta",drag:s6?"Arrastra los signos a su lugar":"Arrastra la letra a su lugar"}[q.m];
+app.innerHTML=hdr()+`<div class=box><h3>${P}</h3>${sent?`<div class=sent>${sent}</div>`:""}<div class=ops>`+q.o.map((o,i)=>dr?`<span class=tile data-i=${i}>${o[1]}</span>`:`<button class="opt${fl?" big":""}" onclick="resp(${i})">${o[1]}</button>`).join("")+`</div>${dr?"<small>Arrastra la ficha al espacio, o toca la ficha y luego toca el espacio.</small>":""}<div id=fb class=fb style="display:none"></div></div>`;
+if(dr)setDrag()}
+/* Arrastrar y soltar con ratón/dedo + alternativa de clic/toque */
+function setDrag(){const gp=$("gap"),hit=e=>{const r=gp.getBoundingClientRect();return e.clientX>r.left-30&&e.clientX<r.right+30&&e.clientY>r.top-30&&e.clientY<r.bottom+30};
+document.querySelectorAll(".tile").forEach(c=>{c.onpointerdown=ev=>{if(S.lock)return;ev.preventDefault();
+const i=+c.dataset.i,r=c.getBoundingClientRect(),f=c.cloneNode(true),sx=ev.clientX,sy=ev.clientY;let mv=0;f.classList.add("fly");document.body.appendChild(f);
+const ps=e=>{f.style.left=e.clientX-r.width/2+"px";f.style.top=e.clientY-r.height/2+"px"};ps(ev);
+const m=e=>{if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>8)mv=1;ps(e);gp.classList.toggle("hot",hit(e))};
+const u=e=>{removeEventListener("pointermove",m);removeEventListener("pointerup",u);f.remove();gp.classList.remove("hot");
+if(mv){if(hit(e))resp(i)}else{S.sel=i;document.querySelectorAll(".tile").forEach(x=>x.classList.toggle("sel",x==c))}};
+addEventListener("pointermove",m);addEventListener("pointerup",u)}});
+gp.onclick=()=>{if(S.sel!=null&&!S.lock)resp(S.sel)}}
+/* Respuesta y retroalimentación */
+function resp(i){if(S.lock)return;S.lock=1;const q=S.q[S.n],ok=q.o[i][0]==q.cor;
+document.querySelectorAll(".opt,.tile").forEach((b,j)=>{b.disabled=true;b.classList.remove("sel");if(q.o[j][0]==q.cor)b.classList.add("rt");else if(j==i)b.classList.add("bad")});
+const gp=$("gap");if(gp)gp.textContent=S.gi==5?(q.cor=="q"?"¿":"¡"):q.cor;
+let m;
+if(ok){S.pts+=PTS;S.ok++;S.st++;snd(1);burst(S.st>=3?14:6);
+m=`🎉 ${PR[Math.random()*PR.length|0]} <b>+${PTS} puntos</b>${S.st==3?" · 🔥 ¡Racha de 3 aciertos!":S.st==5?" · 🚀 ¡Racha de 5, eres imparable!":S.st==9?" · 🏆 ¡Ronda perfecta!":""}<br>✔ ${q.right}`}
+else{S.st=0;snd(0);m=`💚 ¡Casi! ${q.why}<br>✔ ${q.right}<br>¡No pasa nada, así se aprende!`}
+const f=$("fb");f.style.display="block";f.className="fb "+(ok?"ok":"bad");
+f.innerHTML=m+`<br><button class="btn go" onclick="sig()">${S.n==NQ-1?"Ver resultado 🏁":"Siguiente ➡️"}</button>`}
+function sig(){S.n++;S.n==NQ?fin():pregunta()}
+/* ===== Resultado, aprobación y desbloqueo ===== */
+function fin(){const d=load(),gi=S.gi,prev=d.best[gi]||0,pass=S.pts>=PASS,rec=S.pts>prev,opened=pass&&prev<PASS&&gi<5;
+d.best[gi]=Math.max(prev,S.pts);save(d);
+const st=S.pts>=40?3:S.pts>=PASS?2:1;
+if(pass)burst(20);
+const head=pass?`🎉 ¡Aprobaste el Nivel ${gi+1}!`:`💪 ¡Casi lo logras!`;
+const body=pass?`Lograste <b>${S.pts} de 45</b> puntos.${opened?`<br>🔓 ¡Desbloqueaste el Nivel ${gi+2}: ${BK[gi+1].t}!`:""}${gi==5?"<br>🏅 ¡Completaste toda la Aventura Ortográfica! ¡Felicitaciones!":""}`
+:`Necesitas <b>${PASS}</b> puntos para avanzar y lograste <b>${S.pts}</b>. Te faltaron <b>${PASS-S.pts}</b>. ¡Inténtalo otra vez, tú puedes superarte!`;
+app.innerHTML=`<div class=box><div class=stars>${"⭐".repeat(st)}${"☆".repeat(3-st)}</div><h2>${head}</h2><p>${body}</p>
+<div class=rec>${rec?"🏆 ¡Nuevo récord personal!":"🏆 Tu mejor puntaje: "+prev+"/45. ¡Supéralo!"}<br>Aciertos: ${S.ok} de ${NQ}</div>
+${S.cyc?"<p>📚 ¡Ya viste todos los ejercicios de este nivel! Empieza un nuevo ciclo.</p>":""}
+${pass&&gi<5?`<button class="btn go" onclick="jugar(${gi+1})">Siguiente nivel ▶️</button>`:""}
+<button class="btn ${pass?"":"go"}" onclick="jugar(${gi})">🔁 ${pass?"Jugar de nuevo y mejorar":"Intentar otra vez"}</button><button class=btn onclick="menu()">🏠 Menú</button></div>`}
+menu();
+</script></body></html>
